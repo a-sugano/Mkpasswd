@@ -111,7 +111,7 @@
   <button id="generate">生成する</button>
 
   <div class="code-container">
-    <div class="copy-code" id="copy">クリップボードにコピー</div>
+    <div class="copy-code" id="copy"></div>
     <div class="result" id="result"></div>
   </div>
 </div>
@@ -121,7 +121,7 @@
   const copyLabel = document.getElementById("copy");
 
   function resetCopyState() {
-    copyLabel.textContent = "📋 Copy";
+    copyLabel.textContent = "クリップボードにコピー";
     copyLabel.classList.remove("copied");
   }
 
@@ -183,7 +183,7 @@
     if (!result.textContent) return;
 
     await navigator.clipboard.writeText(result.textContent);
-    copyLabel.textContent = "✅ コピーしました";
+    copyLabel.textContent = "コピーしました";
     copyLabel.classList.add("copied");
   });
 
