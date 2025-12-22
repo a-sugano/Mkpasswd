@@ -33,20 +33,40 @@
       margin-top: 8px;
     }
     button {
-      margin-top: 20px;
+      margin-top: 12px;
       width: 100%;
       padding: 10px;
       font-size: 16px;
     }
-    .result {
+
+    /* コードブロック風表示 */
+    .code-container {
+      position: relative;
       margin-top: 20px;
-      padding: 10px;
-      background: #eef2f5;
-      font-family: monospace;
+    }
+    .result {
+      padding: 12px;
+      background: #0f172a;
+      color: #e5e7eb;
+      font-family: ui-monospace, SFMono-Regular, monospace;
       white-space: pre-wrap;
       word-break: break-all;
+      border-radius: 6px;
       max-height: 300px;
       overflow-y: auto;
+      font-size: 14px;
+    }
+    .copy-code {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+      color: #93c5fd;
+    }
+    .copy-code.copied {
+      color: #86efac;
     }
   </style>
 </head>
@@ -74,31 +94,37 @@
   </label>
 
   <div class="symbols-group">
+    <label><input type="radio" name="symbolSet" value="_" checked> _</label>
+    <label><input type="radio" name="symbolSet" value="!@#$%&"> !@#$%&</label>
     <label>
-      <input type="radio" name="symbolSet" value="_" checked>
-      _
-    </label>
-    <label>
-      <input type="radio" name="symbolSet" value="!@#$%&">
-      !@#$%&
-    </label>
-    <label>
-      <input type="radio" name="symbolSet" value="!@#$%^&*()-_=+[]{};:,.<>?">
+      <input type="radio" name="symbolSet"
+        value="!@#$%^&*()-_=+[]{};:,.<>?">
       !@#$%^&*()-_=+[]{};:,.<>?
     </label>
   </div>
 
   <label>
     記号の数:
-    <input type="number" id="symbolCount" value="1" min="0">
+    <input type="number" id="symbolCount" value="2" min="0">
   </label>
 
   <button id="generate">生成する</button>
 
-  <div class="result" id="result"></div>
+  <div class="code-container">
+    <div class="copy-code" id="copy">クリップボードにコピー</div>
+    <div class="result" id="result"></div>
+  </div>
 </div>
 
 <script>
+  const result = document.getElementById("result");
+  const copyLabel = document.getElementById("copy");
+
+  function resetCopyState() {
+    copyLabel.textContent = "📋 Copy";
+    copyLabel.classList.remove("copied");
+  }
+
   function randomChar(chars) {
     return chars[Math.floor(Math.random() * chars.length)];
   }
@@ -112,64 +138,63 @@
 
   function generatePassword(length, symbolCount, symbolSet, charPool) {
     const chars = [];
-
-    for (let i = 0; i < symbolCount; i++) {
-      chars.push(randomChar(symbolSet));
-    }
-
-    for (let i = symbolCount; i < length; i++) {
-      chars.push(randomChar(charPool));
-    }
-
+    for (let i = 0; i < symbolCount; i++) chars.push(randomChar(symbolSet));
+    for (let i = symbolCount; i < length; i++) chars.push(randomChar(charPool));
     shuffle(chars);
     return chars.join("");
   }
 
   document.getElementById("generate").addEventListener("click", () => {
-    const length = Number(document.getElementById("length").value);
-    const count = Number(document.getElementById("count").value);
-    const symbolCount = Number(document.getElementById("symbolCount").value);
-    const useSymbols = document.getElementById("useSymbols").checked;
+    resetCopyState();
+
+    const length = +lengthInput.value;
+    const count = +countInput.value;
+    const symbolCount = +symbolCountInput.value;
+    const useSymbols = useSymbolsCheckbox.checked;
 
     let charPool = "";
-    if (document.getElementById("lowercase").checked) {
-      charPool += "abcdefghijklmnopqrstuvwxyz";
-    }
-    if (document.getElementById("uppercase").checked) {
-      charPool += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    }
-    if (document.getElementById("numbers").checked) {
-      charPool += "0123456789";
-    }
+    if (lowercase.checked) charPool += "abcdefghijklmnopqrstuvwxyz";
+    if (uppercase.checked) charPool += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if (numbers.checked)   charPool += "0123456789";
 
     if (!charPool) {
       result.textContent = "記号以外の文字種を選択してください";
       return;
     }
-
     if (useSymbols && symbolCount > length) {
       result.textContent = "記号数が長さを超えています";
       return;
     }
 
-    let symbolSet = "";
-    if (useSymbols) {
-      symbolSet = document.querySelector(
-        'input[name="symbolSet"]:checked'
-      ).value;
-    }
+    const symbolSet = useSymbols
+      ? document.querySelector('input[name="symbolSet"]:checked').value
+      : "";
 
-    const passwords = [];
+    const list = [];
     for (let i = 0; i < count; i++) {
-      passwords.push(
-        useSymbols
-          ? generatePassword(length, symbolCount, symbolSet, charPool)
-          : generatePassword(length, 0, "", charPool)
+      list.push(
+        generatePassword(length, useSymbols ? symbolCount : 0, symbolSet, charPool)
       );
     }
-
-    result.textContent = passwords.join("\n");
+    result.textContent = list.join("\n");
   });
+
+  document.getElementById("copy").addEventListener("click", async () => {
+    if (!result.textContent) return;
+
+    await navigator.clipboard.writeText(result.textContent);
+    copyLabel.textContent = "✅ コピーしました";
+    copyLabel.classList.add("copied");
+  });
+
+  // shorthand
+  const lengthInput = document.getElementById("length");
+  const countInput = document.getElementById("count");
+  const symbolCountInput = document.getElementById("symbolCount");
+  const useSymbolsCheckbox = document.getElementById("useSymbols");
+  const lowercase = document.getElementById("lowercase");
+  const uppercase = document.getElementById("uppercase");
+  const numbers   = document.getElementById("numbers");
 </script>
 
 </body>
